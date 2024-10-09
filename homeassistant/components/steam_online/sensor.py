@@ -2,36 +2,24 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from time import localtime, mktime
-from typing import cast
-
-from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import StateType
-from homeassistant.util.dt import utc_from_timestamp
-
-from . import SteamConfigEntry
-from .const import (
-    CONF_ACCOUNTS,
-    STEAM_API_URL,
-    STEAM_HEADER_IMAGE_FILE,
-    STEAM_ICON_URL,
-    STEAM_MAIN_IMAGE_FILE,
-    STEAM_STATUSES,
-)
-from dataclasses import dataclass
 from collections.abc import Callable, Mapping
-from .coordinator import SteamDataUpdateCoordinator
-from .entity import SteamEntity
-from typing import Any
-from homeassistant.const import EntityCategory
+from dataclasses import dataclass
+from typing import Any, cast
+
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.const import EntityCategory
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import StateType
+
+from . import SteamConfigEntry
+from .const import CONF_ACCOUNTS, STEAM_STATUSES
+from .coordinator import SteamDataUpdateCoordinator
+from .entity import SteamEntity
 
 PARALLEL_UPDATES = 1
 
@@ -148,9 +136,6 @@ SENSOR_DESCRIPTIONS: tuple[SteamSensorEntityDescription, ...] = (
 # }
 
 
-from .const import DOMAIN
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: SteamConfigEntry,
@@ -164,9 +149,6 @@ async def async_setup_entry(
             for account in entry.options[CONF_ACCOUNTS]
         ),
     )
-
-
-from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
 
 class SteamSensor(SteamEntity, SensorEntity):
