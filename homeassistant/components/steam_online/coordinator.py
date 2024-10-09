@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from typing import TYPE_CHECKING
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
 import steam
 from steam.api import _interface_method as INTMethod
@@ -74,3 +75,11 @@ class SteamDataUpdateCoordinator(
             if "401" in str(ex):
                 raise ConfigEntryAuthFailed from ex
             raise UpdateFailed(ex) from ex
+
+    async def subscribe(self) -> None:
+        """Subscribe to state changes"""
+        print("SOMETHING CHANGED YOOO", self)
+        self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self.unsubscribe)
+
+    async def unsubscribe(self) -> None:
+        pass
