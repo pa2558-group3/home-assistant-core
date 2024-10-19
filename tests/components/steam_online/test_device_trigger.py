@@ -2,24 +2,19 @@ from pytest_unordered import unordered
 
 from homeassistant.components import automation
 from homeassistant.components.device_automation import DeviceAutomationType
-from homeassistant.components.steam_online.const import DOMAIN
-from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.components.steam_online.const import (
+    DOMAIN,
+    STATE_AWAY,
+    STATE_ONLINE,
+    TRIGGER_FRIEND_GAME_CHANGED,
+)
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.setup import async_setup_component
 
-
-from homeassistant.components.steam_online.const import (
-    CONDITION_PRIMARY_GAME,
-    DOMAIN,
-    STATE_ONLINE,
-    STATE_AWAY,
-    TRIGGER_FRIEND_GAME_CHANGED,
-)
-
-
-from tests.common import MockConfigEntry, async_get_device_automations
 from . import ACCOUNT_1, ACCOUNT_2, create_entry
+
+from tests.common import async_get_device_automations
 
 
 async def test_get_triggers(
