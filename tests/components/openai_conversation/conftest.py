@@ -19,7 +19,8 @@ def mock_config_entry(hass: HomeAssistant) -> MockConfigEntry:
         title="OpenAI",
         domain="openai_conversation",
         data={
-            "api_key": "bla",
+            "base_url": "https://api.openai.com/v1",
+            "api_key": "bla",  # If you want the tests to pass put in real secret
         },
     )
     entry.add_to_hass(hass)

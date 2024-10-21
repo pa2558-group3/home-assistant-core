@@ -18,6 +18,7 @@ import threading
 import time
 from types import FunctionType
 from typing import TYPE_CHECKING, Any, Final, Literal, NotRequired, TypedDict, final
+from typing import Optional
 
 import voluptuous as vol
 
@@ -434,12 +435,12 @@ class Entity(
     # SAFE TO OVERWRITE
     # The properties and methods here are safe to overwrite when inheriting
     # this class. These may be used to customize the behavior of the entity.
-    entity_id: str = None  # type: ignore[assignment]
+    entity_id: Optional[str] = None  # type: ignore[assignment]
 
     # Owning hass instance. Set by EntityPlatform by calling add_to_platform_start
     # While not purely typed, it makes typehinting more useful for us
     # and removes the need for constant None checks or asserts.
-    hass: HomeAssistant = None  # type: ignore[assignment]
+    hass: Optional[HomeAssistant] = None  # type: ignore[assignment]
 
     # Owning platform instance. Set by EntityPlatform by calling add_to_platform_start
     # While not purely typed, it makes typehinting more useful for us

@@ -39,7 +39,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DEVICE_3080, DOMAIN
+from .const import DEVICE_3080, DOMAIN, ICONS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -195,7 +195,7 @@ class IammeterSensorEntityDescription(SensorEntityDescription):
 SENSOR_TYPES_3080: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Voltage",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -203,7 +203,7 @@ SENSOR_TYPES_3080: tuple[IammeterSensorEntityDescription, ...] = (
     ),
     IammeterSensorEntityDescription(
         key="Current",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.CURRENT,
@@ -211,21 +211,21 @@ SENSOR_TYPES_3080: tuple[IammeterSensorEntityDescription, ...] = (
     ),
     IammeterSensorEntityDescription(
         key="Power",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     IammeterSensorEntityDescription(
         key="ImportEnergy",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     IammeterSensorEntityDescription(
         key="ExportGrid",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -235,7 +235,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Voltage_A",
         translation_key="voltage_a",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -244,7 +244,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Current_A",
         translation_key="current_a",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.CURRENT,
@@ -253,7 +253,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Power_A",
         translation_key="power_a",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -261,7 +261,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="ImportEnergy_A",
         translation_key="import_energy_a",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -269,7 +269,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="ExportGrid_A",
         translation_key="export_grid_a",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -277,7 +277,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Frequency_A",
         translation_key="frequency_a",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         device_class=SensorDeviceClass.FREQUENCY,
         state_class=SensorStateClass.MEASUREMENT,
@@ -286,7 +286,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="PF_A",
         translation_key="pf_a",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER_FACTOR,
@@ -296,7 +296,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Voltage_B",
         translation_key="voltage_b",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -305,7 +305,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Current_B",
         translation_key="current_b",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.CURRENT,
@@ -314,7 +314,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Power_B",
         translation_key="power_b",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -322,7 +322,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="ImportEnergy_B",
         translation_key="import_energy_b",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -330,7 +330,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="ExportGrid_B",
         translation_key="export_grid_b",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -338,7 +338,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Frequency_B",
         translation_key="frequency_b",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         device_class=SensorDeviceClass.FREQUENCY,
         state_class=SensorStateClass.MEASUREMENT,
@@ -347,7 +347,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="PF_B",
         translation_key="pf_b",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER_FACTOR,
@@ -357,7 +357,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Voltage_C",
         translation_key="voltage_c",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -366,7 +366,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Current_C",
         translation_key="current_c",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.CURRENT,
@@ -375,7 +375,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Power_C",
         translation_key="power_c",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -383,7 +383,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="ImportEnergy_C",
         translation_key="import_energy_c",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -391,7 +391,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="ExportGrid_C",
         translation_key="export_grid_c",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -399,7 +399,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Frequency_C",
         translation_key="frequency_c",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         device_class=SensorDeviceClass.FREQUENCY,
         state_class=SensorStateClass.MEASUREMENT,
@@ -408,7 +408,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="PF_C",
         translation_key="pf_c",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER_FACTOR,
@@ -418,7 +418,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Voltage_Net",
         translation_key="voltage_net",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -426,7 +426,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     ),
     IammeterSensorEntityDescription(
         key="Power_Net",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -435,7 +435,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="ImportEnergy_Net",
         translation_key="import_energy_net",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -444,7 +444,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="ExportGrid_Net",
         translation_key="export_grid_net",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -453,7 +453,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="Frequency_Net",
         translation_key="frequency_net",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         device_class=SensorDeviceClass.FREQUENCY,
         state_class=SensorStateClass.MEASUREMENT,
@@ -462,7 +462,7 @@ SENSOR_TYPES_3080T: tuple[IammeterSensorEntityDescription, ...] = (
     IammeterSensorEntityDescription(
         key="PF_Net",
         translation_key="pf_net",
-        icon="mdi:solar-power",
+        icon=ICONS["solar_power"],
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER_FACTOR,

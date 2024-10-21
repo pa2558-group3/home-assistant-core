@@ -4,6 +4,7 @@ import datetime
 import logging
 
 from ical.calendar import Calendar
+
 from ical.calendar_stream import IcsCalendarStream
 from ical.store import TodoStore
 from ical.todo import Todo, TodoStatus

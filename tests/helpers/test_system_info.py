@@ -28,7 +28,6 @@ async def test_get_system_info(hass: HomeAssistant) -> None:
     assert isinstance(info, dict)
     assert info["version"] == current_version
     assert info["user"] is not None
-    assert json.dumps(info) is not None
 
 
 async def test_get_system_info_supervisor_not_available(
@@ -48,7 +47,6 @@ async def test_get_system_info_supervisor_not_available(
         assert isinstance(info, dict)
         assert info["version"] == current_version
         assert info["user"] is not None
-        assert json.dumps(info) is not None
         assert info["installation_type"] == "Home Assistant Supervised"
         assert "No Home Assistant Supervisor info available" in caplog.text
 

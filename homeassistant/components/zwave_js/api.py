@@ -721,7 +721,7 @@ async def websocket_add_node(
         }
         connection.send_message(
             websocket_api.event_message(
-                msg[ID], {"event": "node found", "node": node_details}
+                msg[ID], {"event": event["event"], "node": node_details}
             )
         )
 
@@ -1258,7 +1258,7 @@ async def websocket_replace_failed_node(
         }
         connection.send_message(
             websocket_api.event_message(
-                msg[ID], {"event": "node found", "node": node_details}
+                msg[ID], {"event": event["event"], "node": node_details}
             )
         )
 
@@ -2079,15 +2079,16 @@ async def websocket_subscribe_firmware_update_status(
                 },
             )
         )
+    FIRMWARE_UPDATE_PROGRESS_EVENT = "firmware update progress"
 
     if controller.own_node == node:
         msg[DATA_UNSUBSCRIBE] = unsubs = [
-            controller.on("firmware update progress", forward_controller_progress),
+            controller.on(FIRMWARE_UPDATE_PROGRESS_EVENT, forward_controller_progress),
             controller.on("firmware update finished", forward_controller_finished),
         ]
     else:
         msg[DATA_UNSUBSCRIBE] = unsubs = [
-            node.on("firmware update progress", forward_node_progress),
+            node.on(FIRMWARE_UPDATE_PROGRESS_EVENT, forward_node_progress),
             node.on("firmware update finished", forward_node_finished),
         ]
     connection.subscriptions[msg["id"]] = async_cleanup
@@ -2100,7 +2101,7 @@ async def websocket_subscribe_firmware_update_status(
             websocket_api.event_message(
                 msg[ID],
                 {
-                    "event": "firmware update progress",
+                    "event": FIRMWARE_UPDATE_PROGRESS_EVENT,
                     **_get_controller_firmware_update_progress_dict(
                         controller_progress
                     ),
@@ -2114,7 +2115,7 @@ async def websocket_subscribe_firmware_update_status(
             websocket_api.event_message(
                 msg[ID],
                 {
-                    "event": "firmware update progress",
+                    "event": FIRMWARE_UPDATE_PROGRESS_EVENT,
                     **_get_node_firmware_update_progress_dict(node_progress),
                 },
             )

@@ -351,6 +351,9 @@ async def test_parallel_updates_async_platform(hass: HomeAssistant) -> None:
         """Mock entity that has async_update."""
 
         async def async_update(self):
+            # This method is intentionally left empty as a placeholder for future implementation.
+            # It may be extended later based on testing needs or specific functionality, but for now,
+            # it is part of the mock entity used in the test framework.
             pass
 
     entity = AsyncEntity()

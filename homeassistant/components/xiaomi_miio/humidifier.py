@@ -44,6 +44,9 @@ _LOGGER = logging.getLogger(__name__)
 # Air Humidifier
 ATTR_TARGET_HUMIDITY = "target_humidity"
 
+# Constants
+OPERATION_MODE_FAILED = "Setting operation mode of the miio device failed."
+
 AVAILABLE_ATTRIBUTES = {
     ATTR_MODE: "mode",
     ATTR_TARGET_HUMIDITY: "target_humidity",
@@ -281,7 +284,7 @@ class XiaomiAirHumidifier(XiaomiGenericHumidifier, HumidifierEntity):
 
         _LOGGER.debug("Setting the operation mode to: %s", mode)
         if await self._try_command(
-            "Setting operation mode of the miio device failed.",
+            OPERATION_MODE_FAILED,
             self._device.set_mode,
             AirhumidifierOperationMode[mode],
         ):
@@ -326,7 +329,7 @@ class XiaomiAirHumidifierMiot(XiaomiAirHumidifier):
 
         _LOGGER.debug("Setting the humidity to: %s", target_humidity)
         if await self._try_command(
-            "Setting operation mode of the miio device failed.",
+            OPERATION_MODE_FAILED,
             self._device.set_target_humidity,
             target_humidity,
         ):
@@ -359,7 +362,7 @@ class XiaomiAirHumidifierMiot(XiaomiAirHumidifier):
         _LOGGER.debug("Setting the operation mode to: %s", mode)
         if self._state:
             if await self._try_command(
-                "Setting operation mode of the miio device failed.",
+                OPERATION_MODE_FAILED,
                 self._device.set_mode,
                 self.REVERSE_MODE_MAPPING[mode],
             ):
@@ -401,7 +404,7 @@ class XiaomiAirHumidifierMjjsq(XiaomiAirHumidifier):
 
         _LOGGER.debug("Setting the humidity to: %s", target_humidity)
         if await self._try_command(
-            "Setting operation mode of the miio device failed.",
+            OPERATION_MODE_FAILED,
             self._device.set_target_humidity,
             target_humidity,
         ):
@@ -431,7 +434,7 @@ class XiaomiAirHumidifierMjjsq(XiaomiAirHumidifier):
         _LOGGER.debug("Setting the operation mode to: %s", mode)
         if self._state:
             if await self._try_command(
-                "Setting operation mode of the miio device failed.",
+                OPERATION_MODE_FAILED,
                 self._device.set_mode,
                 self.MODE_MAPPING[mode],
             ):

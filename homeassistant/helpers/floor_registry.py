@@ -84,12 +84,11 @@ class FloorRegistryStore(Store[FloorRegistryStoreData]):
         if old_major_version > STORAGE_VERSION_MAJOR:
             raise ValueError("Can't migrate to future version")
 
-        if old_major_version == 1:
-            if old_minor_version < 2:
-                # Version 1.2 implements migration and adds created_at and modified_at
-                created_at = utc_from_timestamp(0).isoformat()
-                for floor in old_data["floors"]:
-                    floor["created_at"] = floor["modified_at"] = created_at
+        if old_major_version == 1 and old_minor_version < 2:
+            # Version 1.2 implements migration and adds created_at and modified_at
+            created_at = utc_from_timestamp(0).isoformat()
+            for floor in old_data["floors"]:
+                floor["created_at"] = floor["modified_at"] = created_at
 
         return old_data  # type: ignore[return-value]
 

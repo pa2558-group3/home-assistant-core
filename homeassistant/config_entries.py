@@ -1350,6 +1350,38 @@ class ConfigEntriesFlowManager(data_entry_flow.FlowManager[ConfigFlowResult]):
                 future.set_result(None)
         self._discovery_debouncer.async_shutdown()
 
+    async def _async_cleanup_reauth_flow_issue(self, flow: ConfigFlow) -> None:
+        """Clean up issue if this is a reauth flow."""
+        if flow.context["source"] != SOURCE_REAUTH:
+            return
+
+        if (entry_id := flow.context.get("entry_id")) is not None and (
+            entry := self.config_entries.async_get_entry(entry_id)
+        ) is not None:
+            issue_id = f"config_entry_reauth_{entry.domain}_{entry.entry_id}"
+            ir.async_delete_issue(self.hass, HOMEASSISTANT_DOMAIN, issue_id)
+
+    async def _async_abort_in_progress_flows(self, flow: ConfigFlow) -> None:
+        """Abort in-progress flows that are related to the given flow."""
+        for progress_flow in self.async_progress_by_handler(flow.handler):
+            progress_unique_id = progress_flow["context"].get("unique_id")
+            progress_flow_id = progress_flow["flow_id"]
+
+            # Abort flows with same unique_id or the default discovery id
+            if progress_flow_id != flow.flow_id and (
+                (flow.unique_id and progress_unique_id == flow.unique_id)
+                or progress_unique_id == DEFAULT_DISCOVERY_UNIQUE_ID
+            ):
+                self.async_abort(progress_flow_id)
+
+            # Abort any flows in progress for the same handler
+            # when integration allows only one config entry
+            if (
+                progress_flow_id != flow.flow_id
+                and await _support_single_config_entry_only(self.hass, flow.handler)
+            ):
+                self.async_abort(progress_flow_id)
+
     async def async_finish_flow(
         self,
         flow: data_entry_flow.FlowHandler[ConfigFlowResult],
@@ -1368,13 +1400,7 @@ class ConfigEntriesFlowManager(data_entry_flow.FlowManager[ConfigFlowResult]):
         if not self._async_has_other_discovery_flows(flow.flow_id):
             persistent_notification.async_dismiss(self.hass, DISCOVERY_NOTIFICATION_ID)
 
-        # Clean up issue if this is a reauth flow
-        if flow.context["source"] == SOURCE_REAUTH:
-            if (entry_id := flow.context.get("entry_id")) is not None and (
-                entry := self.config_entries.async_get_entry(entry_id)
-            ) is not None:
-                issue_id = f"config_entry_reauth_{entry.domain}_{entry.entry_id}"
-                ir.async_delete_issue(self.hass, HOMEASSISTANT_DOMAIN, issue_id)
+        await self._async_cleanup_reauth_flow_issue(flow)
 
         if result["type"] != data_entry_flow.FlowResultType.CREATE_ENTRY:
             return result
@@ -1399,23 +1425,7 @@ class ConfigEntriesFlowManager(data_entry_flow.FlowManager[ConfigFlowResult]):
 
         # Abort all flows in progress with same unique ID
         # or the default discovery ID
-        for progress_flow in self.async_progress_by_handler(flow.handler):
-            progress_unique_id = progress_flow["context"].get("unique_id")
-            progress_flow_id = progress_flow["flow_id"]
-
-            if progress_flow_id != flow.flow_id and (
-                (flow.unique_id and progress_unique_id == flow.unique_id)
-                or progress_unique_id == DEFAULT_DISCOVERY_UNIQUE_ID
-            ):
-                self.async_abort(progress_flow_id)
-
-            # Abort any flows in progress for the same handler
-            # when integration allows only one config entry
-            if (
-                progress_flow_id != flow.flow_id
-                and await _support_single_config_entry_only(self.hass, flow.handler)
-            ):
-                self.async_abort(progress_flow_id)
+        await self._async_abort_in_progress_flows(flow)
 
         if flow.unique_id is not None:
             # Reset unique ID when the default discovery ID has been used
@@ -2405,11 +2415,10 @@ class ConfigFlow(ConfigEntryBaseFlow):
             self.context["unique_id"] = None
             return None
 
-        if raise_on_progress:
-            if self._async_in_progress(
-                include_uninitialized=True, match_context={"unique_id": unique_id}
-            ):
-                raise data_entry_flow.AbortFlow("already_in_progress")
+        if raise_on_progress and self._async_in_progress(
+            include_uninitialized=True, match_context={"unique_id": unique_id}
+        ):
+            raise data_entry_flow.AbortFlow("already_in_progress")
 
         self.context["unique_id"] = unique_id
 

@@ -58,7 +58,6 @@ class ImportCollector(ast.NodeVisitor):
             return
 
         if node.module.startswith("homeassistant.components."):
-            # from homeassistant.components.alexa.smart_home import EVENT_ALEXA_SMART_HOME
             # from homeassistant.components.logbook import bla
             self._add_reference(node.module.split(".")[2])
 

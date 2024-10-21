@@ -1920,7 +1920,7 @@ def test_extending_entity_description(snapshot: SnapshotAssertion) -> None:
 
     @dataclasses.dataclass
     class ThawedEntityDescription(entity.EntityDescription):
-        extra: str = None
+        extra: str = ""
 
     obj = ThawedEntityDescription("blah", extra="foo", name="name")
     assert obj == snapshot

@@ -566,12 +566,17 @@ class Searcher:
                 self._async_resolve_up_area(entity_entry.area_id)
 
             # Inherit area from device
-            elif entity_entry.device_id and (
-                device_entry := self._device_registry.async_get(entity_entry.device_id)
+            elif (
+                entity_entry.device_id
+                and (
+                    device_entry := self._device_registry.async_get(
+                        entity_entry.device_id
+                    )
+                )
+                and device_entry.area_id
             ):
-                if device_entry.area_id:
-                    self._add(ItemType.AREA, device_entry.area_id)
-                    self._async_resolve_up_area(device_entry.area_id)
+                self._add(ItemType.AREA, device_entry.area_id)
+                self._async_resolve_up_area(device_entry.area_id)
 
             # Add device that provided this entity
             self._add(ItemType.DEVICE, entity_entry.device_id)

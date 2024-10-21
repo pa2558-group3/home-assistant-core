@@ -191,7 +191,6 @@ class XYPoint:
 class GamutType:
     """Represents the Gamut of a light."""
 
-    # ColorGamut = gamut(xypoint(xR,yR),xypoint(xG,yG),xypoint(xB,yB))
     red: XYPoint = attr.ib()
     green: XYPoint = attr.ib()
     blue: XYPoint = attr.ib()
@@ -489,7 +488,7 @@ def color_rgbww_to_rgb(
     return match_max_scale((r, g, b, cw, ww), rgb)  # type: ignore[return-value]
 
 
-def color_rgb_to_hex(r: int, g: int, b: int) -> str:
+def color_rgb_to_hex(r: float, g: float, b: float) -> str:
     """Return a RGB color from a hex color string."""
     return f"{round(r):02x}{round(g):02x}{round(b):02x}"
 

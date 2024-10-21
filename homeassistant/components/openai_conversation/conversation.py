@@ -1,28 +1,15 @@
 """Conversation support for OpenAI."""
 
 from collections.abc import Callable
-import json
 from typing import Any, Literal
 
 import openai
 from openai._types import NOT_GIVEN
-from openai.types.chat import (
-    ChatCompletionAssistantMessageParam,
-    ChatCompletionMessage,
-    ChatCompletionMessageParam,
-    ChatCompletionMessageToolCallParam,
-    ChatCompletionSystemMessageParam,
-    ChatCompletionToolMessageParam,
-    ChatCompletionToolParam,
-    ChatCompletionUserMessageParam,
-)
-from openai.types.chat.chat_completion_message_tool_call_param import Function
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
 from openai.types.shared_params import FunctionDefinition
-import voluptuous as vol
 from voluptuous_openapi import convert
 
 from homeassistant.components import assist_pipeline, conversation
-from homeassistant.components.conversation import trace
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_LLM_HASS_API, MATCH_ALL
 from homeassistant.core import HomeAssistant
@@ -123,73 +110,81 @@ class OpenAIConversationEntity(
         self, user_input: conversation.ConversationInput
     ) -> conversation.ConversationResult:
         """Process a sentence."""
-        options = self.entry.options
+        conversation_id, messages = self._initialize_conversation(user_input)
         intent_response = intent.IntentResponse(language=user_input.language)
-        llm_api: llm.APIInstance | None = None
-        tools: list[ChatCompletionToolParam] | None = None
-        user_name: str | None = None
-        llm_context = llm.LLMContext(
-            platform=DOMAIN,
-            context=user_input.context,
-            user_prompt=user_input.text,
-            language=user_input.language,
-            assistant=conversation.DOMAIN,
-            device_id=user_input.device_id,
+        llm_api, tools = await self._setup_llm_api(user_input, intent_response)
+        if llm_api is None:
+            return self._create_conversation_result(intent_response, conversation_id)
+
+        prompt = await self._generate_prompt(user_input, llm_api, intent_response)
+        if prompt is None:
+            return self._create_conversation_result(intent_response, conversation_id)
+
+        return await self._generate_response(
+            user_input, conversation_id, messages, prompt, tools, intent_response
         )
 
+    def _initialize_conversation(self, user_input: conversation.ConversationInput):
+        """Initialize conversation."""
+        conversation_id = self._handle_invalid_conversation_id(user_input)
+        messages = self.history.get(conversation_id, [])
+        return conversation_id, messages
+
+    def _handle_invalid_conversation_id(
+        self, user_input: conversation.ConversationInput
+    ):
+        """Handle invalid conversation ID."""
+        conversation_id = user_input.conversation_id or ""
+        try:
+            ulid.ulid_to_bytes(conversation_id)
+            return ulid.ulid_now()
+        except ValueError:
+            return conversation_id
+
+    async def _setup_llm_api(self, user_input, intent_response):
+        """Setup LLM API and tools."""  # noqa: D401
+        options = self.entry.options
+        llm_api = None
+        tools = None
         if options.get(CONF_LLM_HASS_API):
             try:
                 llm_api = await llm.async_get_api(
                     self.hass,
                     options[CONF_LLM_HASS_API],
-                    llm_context,
+                    llm.LLMContext(
+                        platform=DOMAIN,
+                        context=user_input.context,
+                        user_prompt=user_input.text,
+                        language=user_input.language,
+                        assistant=conversation.DOMAIN,
+                        device_id=user_input.device_id,
+                    ),
                 )
+                tools = [
+                    _format_tool(tool, llm_api.custom_serializer)
+                    for tool in llm_api.tools
+                ]
             except HomeAssistantError as err:
                 LOGGER.error("Error getting LLM API: %s", err)
                 intent_response.async_set_error(
                     intent.IntentResponseErrorCode.UNKNOWN,
                     f"Error preparing LLM API: {err}",
                 )
-                return conversation.ConversationResult(
-                    response=intent_response, conversation_id=user_input.conversation_id
-                )
-            tools = [
-                _format_tool(tool, llm_api.custom_serializer) for tool in llm_api.tools
-            ]
+        return llm_api, tools
 
-        if user_input.conversation_id is None:
-            conversation_id = ulid.ulid_now()
-            messages = []
+    def _create_conversation_result(self, intent_response, conversation_id):
+        """Create a conversation result."""
+        return conversation.ConversationResult(
+            response=intent_response, conversation_id=conversation_id
+        )
 
-        elif user_input.conversation_id in self.history:
-            conversation_id = user_input.conversation_id
-            messages = self.history[conversation_id]
-
-        else:
-            # Conversation IDs are ULIDs. We generate a new one if not provided.
-            # If an old OLID is passed in, we will generate a new one to indicate
-            # a new conversation was started. If the user picks their own, they
-            # want to track a conversation and we respect it.
-            try:
-                ulid.ulid_to_bytes(user_input.conversation_id)
-                conversation_id = ulid.ulid_now()
-            except ValueError:
-                conversation_id = user_input.conversation_id
-
-            messages = []
-
-        if (
-            user_input.context
-            and user_input.context.user_id
-            and (
-                user := await self.hass.auth.async_get_user(user_input.context.user_id)
-            )
-        ):
-            user_name = user.name
-
+    async def _generate_prompt(self, user_input, llm_api, intent_response):
+        """Generate the prompt for the LLM."""
+        options = self.entry.options
+        user_name = await self._get_user_name(user_input)
         try:
             prompt_parts = [
-                template.Template(
+                await template.Template(
                     llm.BASE_PROMPT
                     + options.get(CONF_PROMPT, llm.DEFAULT_INSTRUCTIONS_PROMPT),
                     self.hass,
@@ -197,132 +192,75 @@ class OpenAIConversationEntity(
                     {
                         "ha_name": self.hass.config.location_name,
                         "user_name": user_name,
-                        "llm_context": llm_context,
+                        "llm_context": llm.LLMContext(
+                            platform=DOMAIN,
+                            context=user_input.context,
+                            user_prompt=user_input.text,
+                            language=user_input.language,
+                            assistant=conversation.DOMAIN,
+                            device_id=user_input.device_id,
+                        ),
                     },
                     parse_result=False,
                 )
             ]
-
+            if llm_api:
+                prompt_parts.append(llm_api.api_prompt)
+                return "\n".join(prompt_parts)
         except TemplateError as err:
             LOGGER.error("Error rendering prompt: %s", err)
-            intent_response = intent.IntentResponse(language=user_input.language)
             intent_response.async_set_error(
                 intent.IntentResponseErrorCode.UNKNOWN,
                 f"Sorry, I had a problem with my template: {err}",
             )
-            return conversation.ConversationResult(
-                response=intent_response, conversation_id=conversation_id
-            )
+            return None
 
-        if llm_api:
-            prompt_parts.append(llm_api.api_prompt)
+    async def _get_user_name(self, user_input):
+        """Retrieve the user's name."""
+        if user_input.context and user_input.context.user_id:
+            user = await self.hass.auth.async_get_user(user_input.context.user_id)
+            return user.name if user else None
+        return None
 
-        prompt = "\n".join(prompt_parts)
-
-        # Create a copy of the variable because we attach it to the trace
-        messages = [
-            ChatCompletionSystemMessageParam(role="system", content=prompt),
-            *messages[1:],
-            ChatCompletionUserMessageParam(role="user", content=user_input.text),
-        ]
-
-        LOGGER.debug("Prompt: %s", messages)
-        LOGGER.debug("Tools: %s", tools)
-        trace.async_conversation_trace_append(
-            trace.ConversationTraceEventType.AGENT_DETAIL,
-            {"messages": messages, "tools": llm_api.tools if llm_api else None},
-        )
-
+    async def _generate_response(
+        self, user_input, conversation_id, messages, prompt, tools, intent_response
+    ):
+        """Generate a response using the LLM."""
         client = self.entry.runtime_data
-
-        # To prevent infinite loops, we limit the number of iterations
         for _iteration in range(MAX_TOOL_ITERATIONS):
             try:
                 result = await client.chat.completions.create(
-                    model=options.get(CONF_CHAT_MODEL, RECOMMENDED_CHAT_MODEL),
+                    model=self.entry.options.get(
+                        CONF_CHAT_MODEL, RECOMMENDED_CHAT_MODEL
+                    ),
                     messages=messages,
                     tools=tools or NOT_GIVEN,
-                    max_tokens=options.get(CONF_MAX_TOKENS, RECOMMENDED_MAX_TOKENS),
-                    top_p=options.get(CONF_TOP_P, RECOMMENDED_TOP_P),
-                    temperature=options.get(CONF_TEMPERATURE, RECOMMENDED_TEMPERATURE),
+                    max_tokens=self.entry.options.get(
+                        CONF_MAX_TOKENS, RECOMMENDED_MAX_TOKENS
+                    ),
+                    top_p=self.entry.options.get(CONF_TOP_P, RECOMMENDED_TOP_P),
+                    temperature=self.entry.options.get(
+                        CONF_TEMPERATURE, RECOMMENDED_TEMPERATURE
+                    ),
                     user=conversation_id,
                 )
-            except openai.OpenAIError as err:
-                intent_response = intent.IntentResponse(language=user_input.language)
+                LOGGER.debug("Response %s", result)
+                response = result.choices[0].message
+                messages.append(response)
+                self.history[conversation_id] = messages
+                return self._create_conversation_result(
+                    intent_response, conversation_id
+                )
+            except openai.OpenAIError as e:
+                LOGGER.error("Error generating response: %s", e)
                 intent_response.async_set_error(
                     intent.IntentResponseErrorCode.UNKNOWN,
-                    f"Sorry, I had a problem talking to OpenAI: {err}",
+                    "An error occurred while generating the response.",
                 )
-                return conversation.ConversationResult(
-                    response=intent_response, conversation_id=conversation_id
+                return self._create_conversation_result(
+                    intent_response, conversation_id
                 )
-
-            LOGGER.debug("Response %s", result)
-            response = result.choices[0].message
-
-            def message_convert(
-                message: ChatCompletionMessage,
-            ) -> ChatCompletionMessageParam:
-                """Convert from class to TypedDict."""
-                tool_calls: list[ChatCompletionMessageToolCallParam] = []
-                if message.tool_calls:
-                    tool_calls = [
-                        ChatCompletionMessageToolCallParam(
-                            id=tool_call.id,
-                            function=Function(
-                                arguments=tool_call.function.arguments,
-                                name=tool_call.function.name,
-                            ),
-                            type=tool_call.type,
-                        )
-                        for tool_call in message.tool_calls
-                    ]
-                param = ChatCompletionAssistantMessageParam(
-                    role=message.role,
-                    content=message.content,
-                )
-                if tool_calls:
-                    param["tool_calls"] = tool_calls
-                return param
-
-            messages.append(message_convert(response))
-            tool_calls = response.tool_calls
-
-            if not tool_calls or not llm_api:
-                break
-
-            for tool_call in tool_calls:
-                tool_input = llm.ToolInput(
-                    tool_name=tool_call.function.name,
-                    tool_args=json.loads(tool_call.function.arguments),
-                )
-                LOGGER.debug(
-                    "Tool call: %s(%s)", tool_input.tool_name, tool_input.tool_args
-                )
-
-                try:
-                    tool_response = await llm_api.async_call_tool(tool_input)
-                except (HomeAssistantError, vol.Invalid) as e:
-                    tool_response = {"error": type(e).__name__}
-                    if str(e):
-                        tool_response["error_text"] = str(e)
-
-                LOGGER.debug("Tool response: %s", tool_response)
-                messages.append(
-                    ChatCompletionToolMessageParam(
-                        role="tool",
-                        tool_call_id=tool_call.id,
-                        content=json.dumps(tool_response),
-                    )
-                )
-
-        self.history[conversation_id] = messages
-
-        intent_response = intent.IntentResponse(language=user_input.language)
-        intent_response.async_set_speech(response.content or "")
-        return conversation.ConversationResult(
-            response=intent_response, conversation_id=conversation_id
-        )
+        return None
 
     async def _async_entry_update_listener(
         self, hass: HomeAssistant, entry: ConfigEntry

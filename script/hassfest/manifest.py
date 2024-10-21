@@ -429,9 +429,8 @@ def validate(integrations: dict[str, Integration], config: Config) -> None:
     manifests_resorted = []
     for integration in integrations.values():
         validate_manifest(integration, core_components_dir)
-        if not integration.errors:
-            if sort_manifest(integration, config):
-                manifests_resorted.append(integration.manifest_path)
+        if not integration.errors and sort_manifest(integration, config):
+            manifests_resorted.append(integration.manifest_path)
     if config.action == "generate" and manifests_resorted:
         subprocess.run(
             [

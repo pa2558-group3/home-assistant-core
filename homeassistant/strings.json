@@ -2,6 +2,7 @@
   "common": {
     "generic": {
       "model": "Model",
+      "agent": "Agent",
       "ui_managed": "Managed via UI"
     },
     "device_automation": {
@@ -96,6 +97,8 @@
         "access_token": "Access token",
         "api_key": "API key",
         "api_token": "API token",
+        "base_url": "Base URL",
+        "enable_memory": "Enable Memory",
         "llm_hass_api": "Control Home Assistant",
         "ssl": "Uses an SSL certificate",
         "verify_ssl": "Verify SSL certificate",

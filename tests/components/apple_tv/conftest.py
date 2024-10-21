@@ -63,10 +63,10 @@ def pairing_mock() -> Generator[AsyncMock]:
             return mock_pair
 
         async def _begin():
-            pass
+            pass #This is a placeholder as the pairing process doesn't require any initialization logic for testing.
 
         async def _close():
-            pass
+            pass #No cleanup needed for the mock pairing process, so this is intentionally left empty.
 
         mock_pair.close.side_effect = _close
         mock_pair.begin.side_effect = _begin

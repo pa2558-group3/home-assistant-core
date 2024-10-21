@@ -965,6 +965,27 @@ async def _async_resolve_domains_to_setup(
     return domains_to_setup, integration_cache
 
 
+async def setup_stage(
+    hass: core.HomeAssistant,
+    config: dict[str, Any],
+    stage_domains: set[str],
+    stage_number: int,
+    timeout: int,
+) -> None:
+    """Set up a given stage of components."""
+    if stage_domains:
+        _LOGGER.info("Setting up stage %d: %s", stage_number, stage_domains)
+        try:
+            async with hass.timeout.async_timeout(timeout, cool_down=COOLDOWN_TIME):
+                await async_setup_multi_components(hass, stage_domains, config)
+        except TimeoutError:
+            _LOGGER.warning(
+                "Setup timed out for stage %d waiting on %s - moving forward",
+                stage_number,
+                hass._active_tasks,  # noqa: SLF001
+            )
+
+
 async def _async_set_up_integrations(
     hass: core.HomeAssistant, config: dict[str, Any]
 ) -> None:
@@ -1026,34 +1047,12 @@ async def _async_set_up_integrations(
     async_set_domains_to_be_loaded(hass, stage_1_domains)
 
     # Start setup
-    if stage_1_domains:
-        _LOGGER.info("Setting up stage 1: %s", stage_1_domains)
-        try:
-            async with hass.timeout.async_timeout(
-                STAGE_1_TIMEOUT, cool_down=COOLDOWN_TIME
-            ):
-                await async_setup_multi_components(hass, stage_1_domains, config)
-        except TimeoutError:
-            _LOGGER.warning(
-                "Setup timed out for stage 1 waiting on %s - moving forward",
-                hass._active_tasks,  # noqa: SLF001
-            )
+    await setup_stage(hass, config, stage_1_domains, 1, STAGE_1_TIMEOUT)
 
     # Add after dependencies when setting up stage 2 domains
     async_set_domains_to_be_loaded(hass, stage_2_domains)
 
-    if stage_2_domains:
-        _LOGGER.info("Setting up stage 2: %s", stage_2_domains)
-        try:
-            async with hass.timeout.async_timeout(
-                STAGE_2_TIMEOUT, cool_down=COOLDOWN_TIME
-            ):
-                await async_setup_multi_components(hass, stage_2_domains, config)
-        except TimeoutError:
-            _LOGGER.warning(
-                "Setup timed out for stage 2 waiting on %s - moving forward",
-                hass._active_tasks,  # noqa: SLF001
-            )
+    await setup_stage(hass, config, stage_2_domains, 2, STAGE_2_TIMEOUT)
 
     # Wrap up startup
     _LOGGER.debug("Waiting for startup to wrap up")

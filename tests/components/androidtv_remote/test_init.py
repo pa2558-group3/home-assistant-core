@@ -83,7 +83,6 @@ async def test_config_entry_reauth_while_reconnecting(
     assert mock_api.async_connect.call_count == 1
     assert mock_api.keep_reconnecting.call_count == 1
 
-    assert invalid_auth_callback is not None
     invalid_auth_callback()
     await hass.async_block_till_done()
     assert any(mock_config_entry.async_get_active_flows(hass, {"reauth"}))

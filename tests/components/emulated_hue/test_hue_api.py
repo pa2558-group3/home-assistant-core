@@ -1336,7 +1336,9 @@ async def perform_get_light_state_by_number(
 
 
 async def perform_get_light_state(
-    client: TestClient, entity_id: str, expected_status: HTTPStatus
+    client: TestClient,
+    entity_id: str,
+    expected_status: int | HTTPStatus = HTTPStatus.OK,
 ) -> JsonObjectType | None:
     """Test the getting of a light state."""
     entity_number = ENTITY_NUMBERS_BY_ID[entity_id]

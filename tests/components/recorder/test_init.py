@@ -1013,7 +1013,7 @@ async def test_defaults_set(hass: HomeAssistant) -> None:
     with patch("homeassistant.components.recorder.async_setup", side_effect=mock_setup):
         assert await async_setup_component(hass, "history", {})
 
-    assert recorder_config is not None
+    
     assert recorder_config["auto_purge"]
     assert recorder_config["auto_repack"]
     assert recorder_config["purge_keep_days"] == 10

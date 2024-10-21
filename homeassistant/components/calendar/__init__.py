@@ -68,6 +68,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "calendar"
+ENTITY_NOT_FOUND = "Entity not found"
 ENTITY_ID_FORMAT = DOMAIN + ".{}"
 PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA
 PLATFORM_SCHEMA_BASE = cv.PLATFORM_SCHEMA_BASE
@@ -701,7 +702,7 @@ async def handle_calendar_event_create(
     """Handle creation of a calendar event."""
     component: EntityComponent[CalendarEntity] = hass.data[DOMAIN]
     if not (entity := component.get_entity(msg["entity_id"])):
-        connection.send_error(msg["id"], ERR_NOT_FOUND, "Entity not found")
+        connection.send_error(msg["id"], ERR_NOT_FOUND, ENTITY_NOT_FOUND)
         return
 
     if (
@@ -742,7 +743,7 @@ async def handle_calendar_event_delete(
 
     component: EntityComponent[CalendarEntity] = hass.data[DOMAIN]
     if not (entity := component.get_entity(msg["entity_id"])):
-        connection.send_error(msg["id"], ERR_NOT_FOUND, "Entity not found")
+        connection.send_error(msg["id"], ERR_NOT_FOUND, ENTITY_NOT_FOUND)
         return
 
     if (
@@ -788,7 +789,7 @@ async def handle_calendar_event_update(
     """Handle creation of a calendar event."""
     component: EntityComponent[CalendarEntity] = hass.data[DOMAIN]
     if not (entity := component.get_entity(msg["entity_id"])):
-        connection.send_error(msg["id"], ERR_NOT_FOUND, "Entity not found")
+        connection.send_error(msg["id"], ERR_NOT_FOUND, ENTITY_NOT_FOUND)
         return
 
     if (

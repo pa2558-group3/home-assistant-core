@@ -684,7 +684,6 @@ async def test_disambiguation(
         await cancelled_event.wait()
 
     # Verify this is the 3 minute timer from Alice
-    assert timer_info is not None
     assert timer_info.device_id == device_alice_study.id
     assert timer_info.start_minutes == 3
 

@@ -6,7 +6,12 @@ import openai
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_API_KEY, Platform
+from homeassistant.const import (
+    CONF_API_KEY,
+    CONF_BASE_URL,
+    CONF_ENABLE_MEMORY,
+    Platform,
+)
 from homeassistant.core import (
     HomeAssistant,
     ServiceCall,
@@ -21,7 +26,7 @@ from homeassistant.exceptions import (
 from homeassistant.helpers import config_validation as cv, selector
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, LOGGER
+from .const import DOMAIN, LOGGER, RECOMMENDED_BASE_URL
 
 SERVICE_GENERATE_IMAGE = "generate_image"
 PLATFORMS = (Platform.CONVERSATION,)
@@ -88,16 +93,57 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: OpenAIConfigEntry) -> bool:
     """Set up OpenAI Conversation from a config entry."""
-    client = openai.AsyncOpenAI(api_key=entry.data[CONF_API_KEY])
+    LOGGER.info("__init__")
+    LOGGER.info(entry.as_dict())
+    timeout_duration = 10.0
     try:
-        await hass.async_add_executor_job(client.with_options(timeout=10.0).models.list)
-    except openai.AuthenticationError as err:
-        LOGGER.error("Invalid API key: %s", err)
-        return False
-    except openai.OpenAIError as err:
-        raise ConfigEntryNotReady(err) from err
+        base_url = entry.options[CONF_BASE_URL]
 
-    entry.runtime_data = client
+        # if the base_url is not the recommended, which means it needs to be checked if is up.
+        # new function to do this
+        if base_url != RECOMMENDED_BASE_URL:
+            timeout_duration = 6.0
+    except KeyError:
+        base_url = entry.data[CONF_BASE_URL]
+
+    # check CONF_ENABLE_MEMORY
+    if entry.data.get(CONF_ENABLE_MEMORY):
+        # if enabled, only for letta with LM Studio Backend
+        from .letta_api import list_LLM_backends  # pylint: disable=import-outside-toplevel  # noqa: I001
+
+        try:
+            async_result = await list_LLM_backends(
+                hass, base_url=base_url, headers={"Authorization": "Bearer token"}
+            )  # headers is unnecessary
+            if async_result.status_code != 200:
+                # import json  # pylint: disable=import-outside-toplevel  # noqa: I001
+
+                # response_json = json.loads(async_result.text)[0]
+
+                # LOGGER.info(f"response_json:{response_json}")  # noqa: G004
+                async_result.raise_for_status()
+                from requests import exceptions
+        except ConnectionRefusedError as err:
+            raise ConfigEntryNotReady(err) from err
+        except exceptions.HTTPError as err:
+            raise ConfigEntryNotReady(err) from err
+
+    else:
+        # if not enabled(default setup)
+        client = openai.AsyncOpenAI(base_url=base_url, api_key=entry.data[CONF_API_KEY])
+
+        try:
+            async_pages = await hass.async_add_executor_job(
+                client.with_options(timeout=timeout_duration).models.list
+            )
+            [model.id async for model in async_pages]
+        except openai.AuthenticationError as err:
+            LOGGER.error("Invalid API key: %s", err)
+            return False
+        except openai.OpenAIError as err:
+            raise ConfigEntryNotReady(err) from err
+
+        entry.runtime_data = client
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 

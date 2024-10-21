@@ -10,3 +10,7 @@ DEFAULT_NAME = "IamMeter"
 DEVICE_3080 = "WEM3080"
 DEVICE_3080T = "WEM3080T"
 DEVICE_TYPES = [DEVICE_3080, DEVICE_3080T]
+
+ICONS = {
+    "solar_power": "mdi:solar-power",
+}
