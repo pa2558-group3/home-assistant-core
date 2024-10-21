@@ -1,3 +1,4 @@
+"""The tests for Steam device triggers."""
 from pytest_unordered import unordered
 
 from homeassistant.components import automation
