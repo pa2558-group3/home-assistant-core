@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import voluptuous as vol
 
 from homeassistant.const import (
@@ -20,6 +22,7 @@ from homeassistant.helpers import (
 )
 from homeassistant.helpers.typing import ConfigType, TemplateVarsType
 
+from . import SteamConfigEntry
 from .const import CONDITION_PRIMARY_GAME, CONF_ACCOUNT, DOMAIN
 
 CONDITION_TYPES = {CONDITION_PRIMARY_GAME}
@@ -54,17 +57,23 @@ def async_condition_from_config(
 ) -> condition.ConditionCheckerType:
     """Create a function to test a device condition."""
 
-    config_entry = hass.config_entries.async_get_entry(
-        list(dr.async_get(hass).async_get(config[ATTR_DEVICE_ID]).config_entries)[0]
+    # Get the config entry for the Steam account based on device_id
+    device = dr.async_get(hass).async_get(config[CONF_DEVICE_ID])
+    if not device:
+        raise TypeError("No device")
+    config_entry = cast(
+        SteamConfigEntry,
+        hass.config_entries.async_get_entry(list(device.config_entries)[0]),
     )
 
     # Find the primary entity id that's linked to the account on initial setup
+    primary_account_id: str = config_entry.data[CONF_ACCOUNT]
     primary_user_entity_id = next(
         entity
         for entity in er.async_entries_for_device(
             er.async_get(hass), config[ATTR_DEVICE_ID]
         )
-        if entity.unique_id.endswith(config_entry.data[CONF_ACCOUNT])
+        if entity.unique_id.endswith(primary_account_id)
     ).entity_id
 
     @callback
@@ -79,12 +88,17 @@ def async_condition_from_config(
         hass: HomeAssistant, variables: TemplateVarsType
     ) -> bool:
         """Test if an entity is a certain state."""
-        trigger = variables.get("trigger")
+        trigger = variables.get("trigger") if variables else None
+        if not trigger:
+            raise TypeError("No trigger")
 
         to_state: State = trigger.get("to_state")
         to_game = to_state.attributes.get("game_id")
 
-        primary_game = hass.states.get(primary_user_entity_id).attributes.get("game_id")
+        primary_state = hass.states.get(primary_user_entity_id)
+        primary_game = (
+            primary_state.attributes.get("game_id") if primary_state else None
+        )
 
         return primary_game is not None and primary_game == to_game
 

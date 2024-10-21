@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import voluptuous as vol
 
 from homeassistant.components.device_automation import DEVICE_TRIGGER_BASE_SCHEMA
@@ -18,6 +20,7 @@ from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.trigger import TriggerActionType, TriggerInfo
 from homeassistant.helpers.typing import ConfigType
 
+from . import SteamConfigEntry
 from .const import CONF_ACCOUNT, DOMAIN, TRIGGER_FRIEND_GAME_CHANGED
 
 # Define the trigger types
@@ -48,7 +51,7 @@ async def async_get_triggers(
     return triggers
 
 
-def async_attach_trigger(
+async def async_attach_trigger(
     hass: HomeAssistant,
     config: ConfigType,
     action: TriggerActionType,
@@ -57,17 +60,22 @@ def async_attach_trigger(
     """Attach a trigger."""
 
     # Get the config entry for the Steam account based on device_id
-    config_entry = hass.config_entries.async_get_entry(
-        list(dr.async_get(hass).async_get(config[CONF_DEVICE_ID]).config_entries)[0]
+    device = dr.async_get(hass).async_get(config[CONF_DEVICE_ID])
+    if not device:
+        raise TypeError("No device")
+    config_entry = cast(
+        SteamConfigEntry,
+        hass.config_entries.async_get_entry(list(device.config_entries)[0]),
     )
 
     # Find the primary entity id that's linked to the account on initial setup
+    primary_account_id: str = config_entry.data[CONF_ACCOUNT]
     primary_user_entity_id = next(
         entity
         for entity in er.async_entries_for_device(
             er.async_get(hass), config[ATTR_DEVICE_ID]
         )
-        if entity.unique_id.endswith(config_entry.data[CONF_ACCOUNT])
+        if entity.unique_id.endswith(primary_account_id)
     ).entity_id
 
     # Get all sensor id's except the primary user
@@ -86,7 +94,7 @@ def async_attach_trigger(
         state_trigger.CONF_ATTRIBUTE: "game_id",
     }
 
-    return state_trigger.async_attach_trigger(
+    return await state_trigger.async_attach_trigger(
         hass,
         state_config,
         action,
